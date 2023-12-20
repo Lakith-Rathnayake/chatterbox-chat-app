@@ -1,4 +1,4 @@
-package lk.ijse.dep11.controller;
+package lk.ijse.dep11.app.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -24,13 +24,11 @@ public class ChatHttpController {
     public void validationExceptionHandler(ConstraintViolationException exp) {
         ResponseStatusException rseExp = new ResponseStatusException(HttpStatus.BAD_REQUEST, exp.getMessage());
         exp.initCause(rseExp);
-        System.out.println("something");
         throw rseExp;
     }
 
     @GetMapping(produces = "application/json")
     public List<String> retrieveMessages() {
-        System.out.println("somthing");
         return chatMessage;
     }
 
