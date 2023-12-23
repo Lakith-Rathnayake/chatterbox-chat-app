@@ -20,15 +20,13 @@ const user = {
     picture: null
 };
 
+let ws = null;
 
 inputElm.addEventListener("click", () => {
     if (inputElm.checked) {
         element.dataset.bsTheme = "dark";
         outputElm.classList.add("dark-mode"); 
         accountElm.querySelector("#account-details").classList.add("bg-dark");
-        // document.querySelectorAll(".message").forEach(msg => {
-        //     msg.classList.add("bg-light-subtle");
-        // });
         document.querySelectorAll(".message.me").forEach((meMsg) => {
           meMsg.classList.add("dark-mode");
         });
@@ -40,9 +38,6 @@ inputElm.addEventListener("click", () => {
     } else {
         element.dataset.bsTheme = "light";
         accountElm.querySelector("#account-details").classList.remove("bg-dark");
-        // document.querySelectorAll(".message").forEach(msg => {
-        //     msg.classList.remove("bg-light-subtle")
-        // });
         document.querySelectorAll(".message.me").forEach((meMsg) => {
           meMsg.classList.remove("dark-mode");
         });
@@ -60,29 +55,34 @@ btnSendElm.addEventListener('click', () => {
     const myObj = {
         message,
         email: user.email
-    }
+    };
 
-    fetch(`${API_BASE_URL}/messages`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(myObj)
-    }).then(res => {
-        if (res.ok) {
-            addChatMessageRecord(myObj);
-            outputElm.scrollTo(0, outputElm.scrollHeight);
-            txtMessageElm.value = "";
-            txtMessageElm.focus();
-      } else {
-        alert("Failed to send the chat message")
-        
-        }
-    }).catch(err => {
-        alert(
-          "Failed to connect with the server, please check the connection."
-        );
-    })
+    ws.send(JSON.stringify(myObj));
+    addChatMessageRecord(myObj);
+    outputElm.scrollTo(0, outputElm.scrollHeight);
+    txtMessageElm.value = "";
+    txtMessageElm.focus();
+
+    // fetch(`${API_BASE_URL}/messages`, {
+    //     method: "POST",
+    //     headers: {
+    //         "Content-Type": "application/json"
+    //     },
+    //     body: JSON.stringify(myObj)
+    // }).then(res => {
+    //     if (res.ok) {
+    //         addChatMessageRecord(myObj);
+    //         outputElm.scrollTo(0, outputElm.scrollHeight);
+    //         txtMessageElm.value = "";
+    //         txtMessageElm.focus();
+    //   } else {
+    //         alert("Failed to send the chat message")
+    //     }
+    // }).catch(err => {
+    //     alert(
+    //       "Failed to connect with the server, please check the connection."
+    //     );
+    // })
 })
 
 function addChatMessageRecord({ message, email }) {
@@ -98,6 +98,7 @@ function addChatMessageRecord({ message, email }) {
     }
     outputElm.append(messageElm);
     messageElm.innerText = message;
+    console.log("message: ", message);
 }
 
 btnSignInElm.addEventListener("click", () => {
@@ -120,11 +121,22 @@ onAuthStateChanged(auth, loggedUser => {
         user.picture = loggedUser.photoURL;
         finalizeLogin();
         loginOverlayElm.classList.add("d-none");
+        if (!ws) {
+            ws = new WebSocket(`${API_BASE_URL}/messages`);
+            ws.addEventListener("message", loadNewChatMessages);
+            ws.addEventListener("error", () => {
+                alert("Connection failure, try refreshing the application");
+            })
+        }
     } else {
         user.email = null;
         user.name = null;
         user.picture = null;
         loginOverlayElm.classList.remove("d-none");
+        if (ws) {
+            ws.close();
+            ws = null;
+        }
     }
 })
 
@@ -149,16 +161,22 @@ document.addEventListener("click", () => {
     accountElm.querySelector("#account-details").classList.add("d-none");
 })
 
-function loadAllMessages() {
-    fetch(`${API_BASE_URL / messages}`)
-        .then(req => req.json())
-        .then(chatMessage => {
-            Array.from(outputElm.children).forEach(child => child.remove());
-            chatMessage.forEach(msg => addChatMessageRecord(msg));
-        })
-        .catch(err => console.log(err));
+// function loadAllMessages() {
+//     fetch(`${API_BASE_URL}/messages`)
+//         .then(req => req.json())
+//         .then(chatMessage => {
+//             Array.from(outputElm.children).forEach(child => child.remove());
+//             chatMessage.forEach(msg => addChatMessageRecord(msg));
+//             chatMessage.forEach(msg => console.log(msg));
+//         })
+//         .catch(err => console.log(err));
+// }
+
+// setInterval(loadAllMessages, 1000);
+
+// loadAllMessages();
+
+function loadNewChatMessages(e) {
+  const msg = JSON.parse(e.data);
+  addChatMessageRecord(msg);
 }
-
-setInterval(loadAllMessages, 1000);
-
-loadAllMessages();
