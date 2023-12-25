@@ -56,6 +56,7 @@ Furthermore, Chatterbox incorporates **Firebase** for essential functionalities 
 
 - **Frontend Development**:
   - HTML, CSS, JavaScript
+  - Bootstrap
   - Firebase Authentication: Securely handles user authentication, ensuring only        authorized individuals can access the app.
   - Firebase Deployment: Hosts the frontend code, ensuring global accessibility and scalability.
 
